@@ -1,0 +1,766 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Quiz Generator API",
+    "description": "API do generowania testów jednokrotnego wyboru za pomocą AI.\r\n[All quiz sets](/api/quiz)\r\n[All logs](/api/logs)",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/export/pdf/{id}": {
+      "get": {
+        "tags": [
+          "Export"
+        ],
+        "summary": "Eksportuje quiz do formatu PDF",
+        "description": "Generuje test w formacie PDF na podstawie parametrów. Obsługuje różne layouty i randomizację.",
+        "operationId": "ExportToPdf",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "questionCount",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "variantsCount",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "layout",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ExportLayout"
+            }
+          },
+          {
+            "name": "includeAnswerKey",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "shuffleQuestions",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "shuffleAnswers",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "randomSeed",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "preventQuestionSplit",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Void"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gpt/models": {
+      "get": {
+        "tags": [
+          "GPT"
+        ],
+        "summary": "Pobiera listę dostępnych modeli GPT",
+        "description": "Endpoints dla modeli GPT",
+        "operationId": "GetGptModels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GptModelInfo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "summary": "Pobiera wszystkie logi",
+        "description": "Endpoints do zarządzania logami",
+        "operationId": "GetLogs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuizLogDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs/{id}": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "summary": "Pobiera log o podanym ID",
+        "description": "Endpoints do zarządzania logami",
+        "operationId": "GetLogById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizLogDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/quiz": {
+      "get": {
+        "tags": [
+          "Quizzes"
+        ],
+        "summary": "Pobiera wszystkie quizy",
+        "description": "Endpoints do zarządzania quizami",
+        "operationId": "GetQuizzes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuizDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Quizzes"
+        ],
+        "summary": "Generuje test jednokrotnego wyboru",
+        "description": "Endpoints do zarządzania quizami",
+        "operationId": "GenerateQuiz",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizGeneratorOptions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/api/quiz/{id}": {
+      "get": {
+        "tags": [
+          "Quizzes"
+        ],
+        "summary": "Pobiera szczegóły quizu",
+        "description": "Endpoints do zarządzania quizami",
+        "operationId": "GetQuiz",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Quizzes"
+        ],
+        "summary": "Edytuje istniejący quiz",
+        "description": "Endpoints do zarządzania quizami",
+        "operationId": "EditQuiz",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Quiz"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Quizzes"
+        ],
+        "summary": "Usuwa quiz",
+        "description": "Endpoints do zarządzania quizami",
+        "operationId": "DeleteQuiz",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExportLayout": {
+        "enum": [
+          "Standard",
+          "Compact",
+          "Double",
+          "Economic"
+        ],
+        "type": "string"
+      },
+      "GptModelInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "input1MTokenPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "output1MTokenPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "inputTokenPrice": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          },
+          "outputTokenPrice": {
+            "type": "number",
+            "format": "double",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LlmQuizResult": {
+        "type": "object",
+        "properties": {
+          "responseQuiz": {
+            "$ref": "#/components/schemas/ResponseQuiz"
+          },
+          "callDetails": {
+            "nullable": true
+          },
+          "usageInfo": {
+            "$ref": "#/components/schemas/UsageInfo"
+          },
+          "timeSpan": {
+            "type": "string",
+            "format": "date-span"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Quiz": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestion"
+            },
+            "nullable": true
+          },
+          "options": {
+            "$ref": "#/components/schemas/QuizGeneratorOptions"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizAnswer": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "isCorrect": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestion"
+            },
+            "nullable": true
+          },
+          "options": {
+            "$ref": "#/components/schemas/QuizGeneratorOptions"
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "estimatedPricePln": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "timeSpan": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizDifficultyLevel": {
+        "enum": [
+          "Easy",
+          "Medium",
+          "Hard"
+        ],
+        "type": "string"
+      },
+      "QuizDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "questionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "answerVariants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "difficultyLevel": {
+            "$ref": "#/components/schemas/QuizDifficultyLevel"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizGeneratorOptions": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "nullable": true
+          },
+          "questionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "difficultyLevel": {
+            "$ref": "#/components/schemas/QuizDifficultyLevel"
+          },
+          "answerVariants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "topic": "Lotnictwo na ogół nie obejmuje zagadnień związanych z lotami w kosmos, którymi zajmuje się astronautyka. Istnieją jednak lub zaproponowane zostały systemy, gdzie lot orbitalny lub suborbitalny, czy nawet opuszczenie strefy grawitacji Ziemi lotem międzyplanetarnym, jest do wykonania pojazdem kosmicznym startującym ze specjalnie przystosowanego samolotu wzniesionego na wysoki pułap lotu, gdzie energetyczny koszt rozpoczęcia lotu kosmicznego, i (co za tym idzie) potrzebna masa pojazdu z potrzebnym paliwem jest znacznie zmniejszona w porównaniu ze startem za pomocą wielkiej rakiety odpalonej z powierzchni.",
+          "questionCount": 5,
+          "difficultyLevel": "Medium",
+          "answerVariants": 4,
+          "modelName": "gpt-4o"
+        }
+      },
+      "QuizLogDetailDto": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "llmQuizResult": {
+            "$ref": "#/components/schemas/LlmQuizResult"
+          },
+          "quiz": {
+            "$ref": "#/components/schemas/QuizDetailDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizLogDto": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "questionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "answerVariants": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "difficultyLevel": {
+            "$ref": "#/components/schemas/QuizDifficultyLevel"
+          },
+          "timeSpan": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "estimatedTotalPricePlnGr": {
+            "type": "number",
+            "format": "double"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuizQuestion": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizAnswer"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseQuiz": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "string",
+            "nullable": true
+          },
+          "q": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseQuizQuestion"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseQuizQuestion": {
+        "type": "object",
+        "properties": {
+          "t": {
+            "type": "string",
+            "nullable": true
+          },
+          "c": {
+            "type": "string",
+            "nullable": true
+          },
+          "w1": {
+            "type": "string",
+            "nullable": true
+          },
+          "w2": {
+            "type": "string",
+            "nullable": true
+          },
+          "w3": {
+            "type": "string",
+            "nullable": true
+          },
+          "w4": {
+            "type": "string",
+            "nullable": true
+          },
+          "w5": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsageInfo": {
+        "type": "object",
+        "properties": {
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "input1MTokenPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "output1MTokenPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "inputTokenPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "outputTokenPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "inputTokenCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "outputTokenCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inputPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "outputPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalPriceUsd": {
+            "type": "number",
+            "format": "double"
+          },
+          "estimatedTotalPricePlnGr": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Void": {
+        "type": "object",
+        "additionalProperties": false
+      }
+    }
+  }
+}
