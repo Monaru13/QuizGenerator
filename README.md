@@ -204,26 +204,3 @@ MIT License © 2026 [Monaru13](https://github.com/Monaru13)
 
 ***
 
-**QuizGenerator** = **AI testy w 30 sekund** dla każdego nauczyciela! 🎓✨
-<span style="display:none">[^1][^2][^3][^4][^5][^6][^7][^8][^9]</span>
-
-<div align="center">⁂</div>
-
-[^1]: https://github.com/Monaru13/QuizGenerator
-
-[^2]: image.jpg
-
-[^3]: export_options_screen.dart
-
-[^4]: image.jpg
-
-[^5]: image.jpg
-
-[^6]: export_options_screen.dart
-
-[^7]: ExportEndpoints.cs
-
-[^8]: file_download_service.dart
-
-[^9]: REST-API.json
-
